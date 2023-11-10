@@ -1,1 +1,1 @@
-# Modeling-Fungi
+An attempt to estimate the fungal growth patterns in different environment given multiple different fungi with various hyphal extension rates, moisture niches, and moisture tolerances. Written to address the following MCM problem: https://www.mathmodels.org/Problems/2021/MCM-A/2021_MCM_Problem_A.pdf
