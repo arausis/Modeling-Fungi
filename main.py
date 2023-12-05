@@ -1,4 +1,5 @@
 import os
+import matplotx
 import sys
 from scipy.integrate import odeint
 import numpy as np
@@ -7,17 +8,31 @@ import matplotlib.pyplot as plt
 matplotlib.use('TkAgg')
 
 
+'''
+Some things that we might want to change
+'''
+# The directory of your variable folder
+PATH = "./vars" 
+# How long to run the simulation for (maximum t-value)
+tmax = 5
+# How many iterations of our t-value we want (how smooth the graph is)
+tstep = 1000
+
+Growthrate = []
+
 # A class defining a fungal strain
 class fungus:
     r = None
     h = None
     m = None
-    N = 0
-    def __init__(self, R, H, M, n):
+    N = 0 
+    S = False
+    def __init__(self, R, H, M, n, s): 
         self.r = R
         self.h = H
         self.m = M
         self.N = n
+        self.S = s
 
     def describe(self):
         print("r : " + str(self.r))
@@ -99,9 +114,14 @@ def getVars(PATH):
                         M = float(var[1].strip()) 
                     elif var[0] == "N":
                         n = float(var[1].strip())
+                    elif var[0] == "S":
+                        if str(var[1]).strip() == "T":
+                            s = True
+                        else:
+                            s = False
                     else:
                         raise Exception("Unexpected variable in " + file) 
-                fungi.append(fungus(R,H,M,n))
+                fungi.append(fungus(R,H,M,n,s))
     return(env, fungi) 
 
 # A simpler fungi class that has pre-calculated an "r-prime"
@@ -112,9 +132,11 @@ r-prime: the entire constant that we can multiply to our basic carrying capacity
 class runfungi:
     n0 = 0
     rprime = 0
+    s = False
 
     def __init__(self, f, e):
         self.n0 = f.N
+        self.s = f.S
         self.rprime = f.r * (1 - (e.beta * abs(e.h - f.h) / f.m) )
 
     def describe(self):
@@ -136,13 +158,17 @@ class model:
     def calculate(self, x, t):
         dndt_list = []
         N = 0
-
         for i in x:
             N += i
 
+        totalrate = 0
         for j in range(len(self.fungi)):
             dndt = self.fungi[j].rprime * x[j] * (1- (N / self.k) )
             dndt_list.append(dndt)
+            if self.fungi[j].s:
+                totalrate += dndt
+
+        Growthrate.append(totalrate)
 
 
         return dndt_list
@@ -151,18 +177,7 @@ class model:
 ------------------------------------------------------------------------
 The main body of the code:
 
-'''
-
-
-'''
-Some things that we might want to change
-'''
-# The directory of your variable folder
-PATH = "./vars" 
-# How long to run the simulation for (maximum t-value)
-tmax = 5
-# How many iterations of our t-value we want (how smooth the graph is)
-tstep = 1000
+    '''
 
 
 '''
@@ -195,12 +210,19 @@ for i in mod.fungi:
 Running the model
 '''
 # Runs the ODE
-t = np.linspace(0,15,1000)
+t = np.linspace(0,tmax, tstep)
 x = odeint(mod.calculate, mod.x0 ,t)
- 
+
 
 #Plots the Data (note, this plots the population of each fungal strain, NOT THE FUNGAL DECOMPOSITION RATE)
 for i in range(len(x[0])):
-    plt.semilogy(t, x[:,i])
+    plt.semilogy(t, x[:,i], label="Fungus " + str(i + 1))
+matplotx.line_labels()
 
+plt.title("Population of Fungal species")
+plt.show(block=True)
+
+#Plots Fugal decomposition rate
+plt.semilogy(Growthrate)
+plt.title("Decomposition Rate")
 plt.show(block=True)
