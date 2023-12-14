@@ -1,0 +1,5 @@
+name: semi-arid
+beta: 0.3
+alpha: 20
+h: 0.5
+k: 100
